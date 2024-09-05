@@ -1,0 +1,68 @@
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.sql.ResultSet;
+
+public class SimpleDatabaseProgram {
+
+    private static final String DB_NAME = "TestDB";
+    
+    public static void main(String[] args) {
+        createTable();
+        insertData();
+        updateData();
+        queryData();
+    }
+
+    // Establish a connection to the SQL Server database
+    private static Connection getConnection() throws SQLException {
+        String url = "jdbc:sqlserver://localhost:1433;databaseName=" + DB_NAME + ";integratedSecurity=true;";
+        return DriverManager.getConnection(url);
+    }
+
+    // Create the Users table if it doesn't exist
+    private static void createTable() {
+        String createTableSql = "IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Users') " +
+                                "CREATE TABLE Users (id INT PRIMARY KEY IDENTITY, name NVARCHAR(50), age INT)";
+        execute(createTableSql, "Table created or already exists.");
+    }
+
+    // Insert a new user into the Users table
+    private static void insertData() {
+        String insertSql = "INSERT INTO Users (name, age) VALUES ('John Doe', 25)";
+        execute(insertSql, "Data inserted.");
+    }
+
+    // Update the user's age
+    private static void updateData() {
+        String updateSql = "UPDATE Users SET age = 26 WHERE name = 'John Doe'";
+        execute(updateSql, "Data updated.");
+    }
+
+    // Query and display all users from the Users table
+    private static void queryData() {
+        String querySql = "SELECT id, name, age FROM Users";
+        try (Connection conn = getConnection(); 
+             Statement stmt = conn.createStatement(); 
+             ResultSet rs = stmt.executeQuery(querySql)) {
+            
+            while (rs.next()) {
+                System.out.println("ID: " + rs.getInt("id") + ", Name: " + rs.getString("name") + ", Age: " + rs.getInt("age"));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    // Execute SQL commands like create, insert, update
+    private static void execute(String sql, String message) {
+        try (Connection conn = getConnection(); 
+             Statement stmt = conn.createStatement()) {
+            stmt.executeUpdate(sql);
+            System.out.println(message);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+}
